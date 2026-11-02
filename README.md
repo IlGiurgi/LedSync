@@ -1,10 +1,15 @@
 # LedSync
 
-**Make your WLED lights dance to the music playing on your Android phone.**
+**Make your WLED, Yeelight, Govee and Philips Hue lights dance to the music playing on your Android phone.**
 Spotify, YouTube, any app: LedSync listens to the phone's own audio output, runs the analysis on the phone
-and streams the light show to your WLED devices over Wi-Fi. No microphone on the ESP32 needed, no PC, no LedFx server.
+and streams the light show to your lights over Wi-Fi. No microphone on the ESP32 needed, no PC, no LedFx server.
 
 [Leggi in italiano](README.it.md)
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="260" alt="Screenshots 1">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="260" alt="Screenshots 2">
+</p>
 
 ## Features
 - **36 audio-reactive effects** rendered on the phone, many adapted from [LedFx](https://github.com/LedFx/LedFx)

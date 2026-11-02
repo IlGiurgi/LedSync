@@ -1,8 +1,13 @@
 # LedSync
 
-**Fa ballare le luci WLED con la musica che suona sul telefono Android.**
+**Fa ballare le luci WLED, Yeelight, Govee e Philips Hue con la musica che suona sul telefono Android.**
 Spotify, YouTube, qualsiasi app: LedSync ascolta l'audio del telefono, lo analizza sul telefono e manda
-lo spettacolo di luci ai WLED via Wi-Fi. Non serve un microfono sull'ESP32, né un PC, né LedFx.
+lo spettacolo di luci alle tue luci via Wi-Fi. Non serve un microfono sull'ESP32, né un PC, né LedFx.
+
+<p align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="260" alt="Screenshot 1">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="260" alt="Screenshot 2">
+</p>
 
 ## Funzioni
 - **36 effetti** a tempo di musica calcolati sul telefono, molti adattati da [LedFx](https://github.com/LedFx/LedFx). Nel silenzio le luci si spengono, sui bassi colpiscono forte.
