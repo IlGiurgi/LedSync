@@ -21,10 +21,8 @@
 </p>
 
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="200" alt="Main screen while running">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="200" alt="All effects with live previews">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width="200" alt="Ambience effects">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="200" alt="Colours">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="300" alt="Main screen while running">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="300" alt="All effects with live previews">
 </p>
 
 ---
