@@ -1,0 +1,2 @@
+• Every effect tile shows a small animated preview
+• Brightness per light, from the light's options

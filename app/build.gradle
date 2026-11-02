@@ -1,0 +1,49 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.ledsync.phone'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.ledsync.phone'
+        minSdk 29
+        targetSdk 34
+        versionCode 26
+        versionName '1.25'
+    }
+
+    // optional: put storeFile/storePassword/keyAlias/keyPassword in keystore.properties (never commit it)
+    def ksFile = rootProject.file('keystore.properties')
+    if (ksFile.exists()) {
+        def ks = new Properties()
+        ksFile.withInputStream { ks.load(it) }
+        signingConfigs {
+            release {
+                storeFile rootProject.file(ks['storeFile'])
+                storePassword ks['storePassword']
+                keyAlias ks['keyAlias']
+                keyPassword ks['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (ksFile.exists()) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // no Google libraries: the app uses only the Android framework
+    dependenciesInfo {
+        includeInApk false
+        includeInBundle false
+    }
+}

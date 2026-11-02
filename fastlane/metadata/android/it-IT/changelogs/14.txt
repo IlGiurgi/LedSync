@@ -1,0 +1,1 @@
+Prima versione pubblica: 26 effetti a tempo di musica, più WLED insieme, griglie di LED, Yeelight ed ESPHome, cambio automatico degli effetti, modalità microfono, riquadro nelle Impostazioni rapide, diagnostica di connessione.

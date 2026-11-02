@@ -1,0 +1,15 @@
+<p>LedSync turns the music playing on your phone (Spotify, YouTube, any player) into a light show on your <b>WLED</b> devices. The analysis runs on the phone, so no microphone on the ESP32, no PC and no LedFx server are needed.</p>
+<ul>
+<li><b>36 audio-reactive effects</b>, many adapted from LedFx: Energy, Scroll, Power, Rain, Bands, Wavelength, Melt, Fire, Lava, Equalizer, Fireworks, Meteors, Kaleidoscope and more. Lights go dark in silence and hit hard on the bass.</li>
+<li><b>Several devices at once</b>, each with its own LED count, effect, direction, name and on/off switch.</li>
+<li><b>LED matrices</b> such as word clocks: equalizer columns, rings from the centre.</li>
+<li><b>Yeelight</b>, <b>Govee</b> and <b>Philips Hue</b> lights, <b>ESPHome</b> lights with the wled effect, and any device that accepts WLED realtime UDP.</li>
+<li>WLED <b>Sound Sync</b> mode to use WLED's own audio-reactive effects.</li>
+<li>Gradients, brightness, mirror, blur, colour roll, favourites, automatic effect change on the beat.</li>
+<li>Tempo (BPM) detection, tempo-locked effects and colours that change on every beat.</li>
+<li>Microphone mode for music from a TV, PC or speakers.</li>
+<li>Notification controls and a Quick Settings tile.</li>
+<li>Built-in connection and latency diagnostics.</li>
+</ul>
+<p>Android asks for screen-sharing consent because that is how audio playback capture works; the screen is not captured and audio is never recorded or sent anywhere. No ads, no tracking, local network only.</p>
+<p>LedSync is not affiliated with WLED, LedFx, Yeelight, Govee, Philips or ESPHome.</p>

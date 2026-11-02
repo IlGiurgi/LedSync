@@ -1,0 +1,1 @@
+Le luci senza API JSON di WLED (orologi, ESPHome) ricevono sempre gli effetti e la luminosità dell'app; niente più errori dei comandi WLED su Yeelight e orologio.

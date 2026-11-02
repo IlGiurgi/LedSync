@@ -1,0 +1,2 @@
+• Ogni effetto mostra una piccola anteprima animata
+• Luminosità per singola luce, dalle opzioni della luce

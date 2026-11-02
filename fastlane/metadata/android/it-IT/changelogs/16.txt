@@ -1,0 +1,1 @@
+Luci Govee (LAN API) e Philips Hue tramite il bridge. "Aggiungi IP" ora chiede il tipo di dispositivo.

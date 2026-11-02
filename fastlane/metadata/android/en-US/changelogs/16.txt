@@ -1,0 +1,1 @@
+Govee lights (LAN API) and Philips Hue lights through the bridge. "Add IP" now asks the device type.

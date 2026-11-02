@@ -1,0 +1,1 @@
+English interface, tempo (BPM) detection, new BPM Flash and BPM Chase effects, colours on the beat, automatic stop after silence.

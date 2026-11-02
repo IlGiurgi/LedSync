@@ -1,0 +1,15 @@
+<p>LedSync trasforma la musica che suona sul telefono (Spotify, YouTube, qualsiasi app) in uno spettacolo di luci sui tuoi <b>WLED</b>. L'analisi avviene sul telefono: non servono un microfono sull'ESP32, un PC o LedFx.</p>
+<ul>
+<li><b>36 effetti</b> a tempo di musica, molti adattati da LedFx: Energy, Scroll, Power, Rain, Bands, Wavelength, Melt, Fuoco, Lava, Equalizer, Fuochi d'artificio, Meteore, Caleidoscopio e altri. Nel silenzio le luci si spengono, sui bassi colpiscono forte.</li>
+<li><b>Più dispositivi insieme</b>, ognuno con numero di LED, effetto, direzione, nome e interruttore propri.</li>
+<li><b>Griglie di LED</b> come gli orologi a parole: colonne dell'equalizzatore, cerchi dal centro.</li>
+<li><b>Yeelight</b>, <b>Govee</b>, <b>Philips Hue</b>, luci <b>ESPHome</b> con l'effetto wled e ogni dispositivo che accetta il realtime UDP di WLED.</li>
+<li>Modalità <b>Sound Sync</b> per usare gli effetti audio di WLED.</li>
+<li>Gradienti, luminosità, specchio, sfocatura, rotazione colori, preferiti, cambio automatico a tempo.</li>
+<li>Rilevamento del tempo (BPM), effetti agganciati al battito e colori che cambiano a ogni colpo.</li>
+<li>Modalità microfono per la musica da TV, PC o casse.</li>
+<li>Comandi nella notifica e riquadro nelle Impostazioni rapide.</li>
+<li>Diagnostica di connessione e ritardi.</li>
+</ul>
+<p>Android chiede il permesso di condivisione schermo perché è così che funziona la cattura dell'audio: lo schermo non viene registrato e l'audio non viene mai salvato né inviato. Niente pubblicità, niente tracciamento, solo rete locale.</p>
+<p>LedSync non è affiliata a WLED, LedFx, Yeelight, Govee, Philips o ESPHome.</p>

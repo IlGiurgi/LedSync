@@ -1,0 +1,28 @@
+# Draft for a merge request to https://gitlab.com/fdroid/fdroiddata (metadata/com.ledsync.phone.yml).
+# Tag the release (git tag vX.Y && git push --tags), then open the merge request on fdroiddata.
+Categories:
+  - Multimedia
+  - Connectivity
+License: GPL-3.0-or-later
+AuthorName: LedSync contributors
+SourceCode: https://github.com/IlGiurgi/LedSync
+IssueTracker: https://github.com/IlGiurgi/LedSync/issues
+Changelog: https://github.com/IlGiurgi/LedSync/blob/HEAD/CHANGELOG.md
+
+AutoName: LedSync
+
+RepoType: git
+Repo: https://github.com/IlGiurgi/LedSync.git
+
+Builds:
+  - versionName: '1.25'
+    versionCode: 26
+    commit: v1.25
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '1.25'
+CurrentVersionCode: 26

@@ -1,0 +1,1 @@
+First public release: 26 audio-reactive effects, multiple WLED devices, LED matrices, Yeelight and ESPHome support, automatic effect change, microphone mode, Quick Settings tile, connection diagnostics.

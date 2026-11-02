@@ -1,0 +1,1 @@
+Interfaccia in inglese, rilevamento BPM, nuovi effetti BPM Flash e BPM Chase, colori a tempo, spegnimento automatico col silenzio.

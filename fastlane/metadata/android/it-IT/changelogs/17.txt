@@ -1,0 +1,1 @@
+Correzioni di affidabilità: ferma/avvia veloce, una Yeelight che si disconnette non blocca più le altre luci, avvio più rapido.

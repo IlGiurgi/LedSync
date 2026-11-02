@@ -1,0 +1,1 @@
+Reliability fixes: quick stop/restart, Yeelight disconnects no longer freeze other lights, faster start.
