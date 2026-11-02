@@ -12,35 +12,29 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
- * Small animated previews of the effects. One built-in demo song (120 BPM: kick, bass line, hi-hats,
- * melody, and a quiet break every few bars) is analysed once and drives every preview strip.
+ * Small animated previews of the effects. They follow the music the app is listening to while it is
+ * running, and stay dark when it is stopped.
  */
 final class EffectPreview {
-    private static final int SR = 48000, HOP = 960;   // 20 ms per analysis frame, like the real capture
-
-    private final AudioAnalyzer analyzer = new AudioAnalyzer(SR);
-    private final short[] buf = new short[HOP];
-    private final byte[] packet = new byte[44];
-    private final Random rnd = new Random(7);
     private final List<Strip> strips = new ArrayList<>();
     private final Handler ui = new Handler(Looper.getMainLooper());
-    private long t;
-    private boolean running;
+    private boolean running, lit;
 
     private final Runnable tick = new Runnable() {
         @Override public void run() {
             if (!running) return;
-            // two analysis frames per 40 ms redraw, so the effects run at their normal 50 fps speed
-            for (int k = 0; k < 2; k++) {
-                fill();
-                analyzer.process(buf, HOP, packet);
-                for (Strip s : strips) s.step(analyzer);
+            AudioAnalyzer a = CaptureService.running ? CaptureService.analyzer : null;
+            if (a != null) {
+                // one step per analysis frame (20 ms), like the effects on the lights
+                for (Strip s : strips) { s.step(a); s.invalidate(); }
+                lit = true;
+            } else if (lit) {
+                for (Strip s : strips) { s.clear(); s.invalidate(); }
+                lit = false;
             }
-            for (Strip s : strips) s.invalidate();
-            ui.postDelayed(this, 40);
+            ui.postDelayed(this, 20);
         }
     };
 
@@ -65,22 +59,6 @@ final class EffectPreview {
         ui.removeCallbacks(tick);
     }
 
-    /** The demo song: 16 s loop, the last 3 s of every 8 are a soft break without drums. */
-    private void fill() {
-        for (int i = 0; i < HOP; i++, t++) {
-            double s = (t % (16L * SR)) / (double) SR;
-            boolean brk = (s % 8) > 5;
-            double beat = s % 0.5, eighth = s % 0.25;
-            double kick = !brk && beat < 0.15 ? 0.7 * Math.exp(-beat * 25) * Math.sin(2 * Math.PI * (50 + 80 * Math.exp(-beat * 40)) * beat) : 0;
-            double bassF = new double[]{55, 55, 73.4, 65.4}[(int) (s / 2) % 4];
-            double bass = (brk ? 0.08 : 0.25) * Math.sin(2 * Math.PI * bassF * s) * (0.6 + 0.4 * Math.exp(-beat * 6));
-            double hat = !brk && eighth < 0.03 ? 0.15 * (rnd.nextDouble() - 0.5) * Math.exp(-eighth * 150) : 0;
-            double mel = (brk ? 0.12 : 0.08) * Math.sin(2 * Math.PI * new double[]{440, 494, 523, 587, 659, 587, 523, 494}[(int) (s * 2) % 8] * s);
-            double v = (kick + bass + hat + mel) * 32767 * 0.8;
-            buf[i] = (short) Math.max(-32768, Math.min(32767, v));
-        }
-    }
-
     /** A row of LEDs showing one effect. */
     static final class Strip extends View {
         private static final int LEDS = 30;
@@ -97,6 +75,10 @@ final class EffectPreview {
         Strip(Context c, int effect) {
             super(c);
             this.effect = effect;
+        }
+
+        void clear() {
+            java.util.Arrays.fill(px, (byte) 0);
         }
 
         void step(AudioAnalyzer a) {

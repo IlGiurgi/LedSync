@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.27 (28)
+- Effect previews follow the real music while the app is running and stay dark when it is stopped (no more demo song).
+
 ## 1.26 (27)
 - Language switch (IT/EN button next to the title): automatic, Italian or English.
 

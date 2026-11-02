@@ -471,7 +471,7 @@ public class MainActivity extends Activity {
         desc.setPadding(0, dp(2), 0, 0);
         t.addView(name);
         t.addView(desc);
-        // a small animated preview of the effect, driven by a built-in demo song
+        // a small animated preview of the effect, following the music while the app is running
         LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(8));
         plp.topMargin = dp(10);
         t.addView(preview.strip(this, index), plp);
