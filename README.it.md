@@ -5,8 +5,10 @@ Spotify, YouTube, qualsiasi app: LedSync ascolta l'audio del telefono, lo analiz
 lo spettacolo di luci alle tue luci via Wi-Fi. Non serve un microfono sull'ESP32, né un PC, né LedFx.
 
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="260" alt="Screenshot 1">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="260" alt="Screenshot 2">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="200" alt="Screenshot 1">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="200" alt="Screenshot 2">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width="200" alt="Screenshot 3">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="200" alt="Screenshot 4">
 </p>
 
 ## Funzioni

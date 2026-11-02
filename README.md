@@ -7,8 +7,10 @@ and streams the light show to your lights over Wi-Fi. No microphone on the ESP32
 [Leggi in italiano](README.it.md)
 
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="260" alt="Screenshots 1">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="260" alt="Screenshots 2">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="200" alt="Screenshots 1">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="200" alt="Screenshots 2">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg" width="200" alt="Screenshots 3">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpg" width="200" alt="Screenshots 4">
 </p>
 
 ## Features
