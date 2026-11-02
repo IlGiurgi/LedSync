@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.29 (30)
+- Uses less battery and Wi-Fi: frames that repeat the last one (e.g. dark during silence) are not sent again, only a refresh every 500 ms.
+- New "Battery saver" switch: 25 updates per second instead of 50, effects keep their speed.
+- The status line is built 5 times per second instead of 50.
+
 ## 1.28 (29)
 - Cleaner top of the screen: no system title bar, the app logo next to the name.
 

@@ -230,6 +230,10 @@ public class MainActivity extends Activity {
             saveBool("mic_mode", on);
             if (CaptureService.running) toast(L.t("Ferma e riavvia per cambiare sorgente", "Stop and start again to change the source"));
         });
+        toggleRow(fxCard, L.t("Risparmio batteria (25 aggiornamenti al secondo)", "Battery saver (25 updates per second)"), Tuning.batterySaver, on -> {
+            Tuning.batterySaver = on;
+            saveBool("battery_saver", on);
+        });
         root.addView(fxCard, cardParams());
         updateEffectTiles();
 
@@ -382,6 +386,7 @@ public class MainActivity extends Activity {
         Tuning.scrollSpeed = prefs.getInt("d_speed", 3);
         Tuning.brightness = prefs.getInt("app_bri", 80) / 100.0;
         Tuning.micMode = prefs.getBoolean("mic_mode", false);
+        Tuning.batterySaver = prefs.getBoolean("battery_saver", false);
         Tuning.autoCycleSec = prefs.getInt("auto_cycle", 0);
         Tuning.beatColors = prefs.getBoolean("beat_colors", false);
         Tuning.autoOffMin = prefs.getInt("auto_off", 0);

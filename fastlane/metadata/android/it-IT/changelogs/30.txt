@@ -1,0 +1,2 @@
+• Consuma meno batteria: i fotogrammi uguali (es. nel silenzio) non vengono rimandati
+• Nuovo interruttore Risparmio batteria: 25 aggiornamenti al secondo invece di 50

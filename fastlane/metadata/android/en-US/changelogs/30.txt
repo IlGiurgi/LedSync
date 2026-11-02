@@ -1,0 +1,2 @@
+• Uses less battery: repeated frames (e.g. during silence) are not sent again
+• New Battery saver switch: 25 updates per second instead of 50

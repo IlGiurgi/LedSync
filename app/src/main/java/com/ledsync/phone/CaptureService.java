@@ -284,7 +284,9 @@ public class CaptureService extends Service {
             long winStart = System.nanoTime(), lastFrame = 0, procSum = 0;
             int winFrames = 0, late = 0;
             double maxGap = 0;
+            long frameNo = 0;
             while (!stopped(gen)) {
+                frameNo++;
                 int filled = 0;
                 long readStart = System.nanoTime();
                 while (filled < HOP && !stopped(gen)) {
@@ -329,6 +331,15 @@ public class CaptureService extends Service {
                             dv.fx.renderMatrix(Tuning.effectFor(dv.key), dv.leds, gridW, Tuning.hue, dv.pixels);
                         else dv.fx.render(Tuning.effectFor(dv.key), dv.leds, Tuning.hue, dv.pixels);
                         finishFrame(dv.pixels, dv.leds, Tuning.flipped.contains(dv.key), dv.key);
+                        // save battery and Wi-Fi: skip frames that repeat the last one (still refresh every
+                        // 500 ms so the light stays in realtime mode) and, in battery saver, every other frame
+                        long nowNs = System.nanoTime();
+                        boolean same = dv.lastSent != null && java.util.Arrays.equals(dv.lastSent, dv.pixels);
+                        boolean keepAlive = nowNs - dv.lastSentNs >= 500_000_000L;
+                        if ((same || (Tuning.batterySaver && (frameNo & 1) == 1)) && !keepAlive) continue;
+                        if (dv.lastSent == null) dv.lastSent = new byte[dv.pixels.length];
+                        System.arraycopy(dv.pixels, 0, dv.lastSent, 0, dv.pixels.length);
+                        dv.lastSentNs = nowNs;
                         for (byte[] pk : dnrgbPackets(dv.pixels, dv.leds)) frame.add(new Object[]{dv.addr, REALTIME_PORT, pk});
                     }
                 }
@@ -358,14 +369,17 @@ public class CaptureService extends Service {
                     y.fx.update(an);
                     y.fx.render(Tuning.effectFor(y.key), ColorDevice.PIXELS, Tuning.hue, y.pixels);
                     finishFrame(y.pixels, ColorDevice.PIXELS, false, y.key);
+                    if (Tuning.batterySaver && (frameNo & 1) == 1) continue;
                     frame.add(new Object[]{y.link, averageColor(y.pixels, ColorDevice.PIXELS)});
                 }
+                if (frameNo % 10 == 0) {
                 String info = active == 0 ? L.t("Tutti i dispositivi sono spenti", "All devices are off")
                         : (Tuning.directMode ? L.t("Effetto attivo su ", "Effect running on ") : L.t("Sound sync verso ", "Sound sync to ")) + active
                         + (active == 1 ? L.t(" dispositivo", " device") : L.t(" dispositivi", " devices"));
                 if (an.beats.confident()) info += String.format(java.util.Locale.ROOT, " · %.0f BPM", an.beats.bpm);
                 if (yeeNote != null) info += "\n" + yeeNote;
                 if (System.currentTimeMillis() - lastErrorMs > 3000) status = info;
+                }
                 // optional delay to line up with Bluetooth speakers: hold frames back, send when due
                 long now = System.nanoTime();
                 queue.addLast(new Object[]{now, frame});
@@ -481,6 +495,9 @@ public class CaptureService extends Service {
         final byte[] pixels;
         /** false for lights without WLED's JSON/sync support: they always get the app's effects. */
         boolean isWled = true;
+        /** Last frame actually sent, to skip repeats (e.g. dark during silence). */
+        byte[] lastSent;
+        long lastSentNs;
 
         Device(String key, InetAddress addr, int leds) {
             this.key = key;

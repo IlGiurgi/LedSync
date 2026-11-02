@@ -42,6 +42,8 @@ public final class Tuning {
 
     /** true = listen with the microphone (music from TV, PC, speakers) instead of the phone's own audio. */
     public static volatile boolean micMode = false;
+    /** Battery saver: frames are sent at 25 per second instead of 50 (effects still run at full speed). */
+    public static volatile boolean batterySaver = false;
     /** Change effect automatically every this many seconds, on a beat; 0 = off. */
     public static volatile int autoCycleSec = 0;
 
