@@ -21,8 +21,7 @@
 </p>
 
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="300" alt="Main screen while running">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="300" alt="All effects with live previews">
+  <img src="docs/screenshots.png" width="640" alt="LedSync: main screen while running and all effects with live previews">
 </p>
 
 ---

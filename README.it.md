@@ -21,8 +21,7 @@
 </p>
 
 <p align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg" width="300" alt="Schermata principale in funzione">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="300" alt="Tutti gli effetti con le anteprime">
+  <img src="docs/screenshots.png" width="640" alt="LedSync: schermata principale in funzione e tutti gli effetti con le anteprime">
 </p>
 
 ---
