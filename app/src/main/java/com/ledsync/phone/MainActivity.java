@@ -116,6 +116,15 @@ public class MainActivity extends Activity {
         info.setPadding(dp(12), dp(4), dp(4), dp(4));
         info.setContentDescription(L.t("Come funziona", "How it works"));
         info.setOnClickListener(v -> Guide.showGuide(this));
+        TextView lang = text(L.IT ? "IT" : "EN", 15, TEXT_2, true);
+        lang.setPadding(dp(10), dp(6), dp(10), dp(6));
+        GradientDrawable lb = new GradientDrawable();
+        lb.setCornerRadius(dp(12));
+        lb.setStroke(dp(1), 0x33FFFFFF);
+        lang.setBackground(lb);
+        lang.setContentDescription(L.t("Lingua", "Language"));
+        lang.setOnClickListener(v -> chooseLanguage());
+        head.addView(lang);
         head.addView(info);
         root.addView(head, matchWrap());
         TextView sub = text(L.t("Le tue luci a tempo con la musica del telefono", "Your lights in time with your phone's music"), 14, TEXT_2, false);
@@ -1093,6 +1102,26 @@ public class MainActivity extends Activity {
     }
 
     /** For lights that are not WLED (e.g. ESPHome with the "wled" effect) the LED count cannot be read, so it is typed here. */
+    /** Language: automatic (phone), Italian or English. The app restarts so every text is rebuilt. */
+    private void chooseLanguage() {
+        String cur = prefs.getString("lang", "");
+        String[] codes = {"", "it", "en"};
+        String[] labels = {(cur.isEmpty() ? "● " : "") + L.t("Automatica (lingua del telefono)", "Automatic (phone language)"),
+                (cur.equals("it") ? "● " : "") + "Italiano", (cur.equals("en") ? "● " : "") + "English"};
+        new AppDialog(this)
+                .setTitle(L.t("Lingua", "Language"))
+                .setItems(labels, (d, which) -> {
+                    if (codes[which].equals(cur)) return;
+                    prefs.edit().putString("lang", codes[which]).commit();
+                    // restart the app process: all texts (effect names included) are built once at start
+                    Intent restart = Intent.makeRestartActivityTask(getComponentName());
+                    startActivity(restart);
+                    Runtime.getRuntime().exit(0);
+                })
+                .setNegativeButton(L.t("Annulla", "Cancel"), null)
+                .show();
+    }
+
     /** Brightness of one light, applied live while the slider moves. */
     private void askDeviceBrightness(String key, String name) {
         Integer cur = Tuning.deviceBrightness.get(key);

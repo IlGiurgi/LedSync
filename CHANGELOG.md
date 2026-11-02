@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.26 (27)
+- Language switch (IT/EN button next to the title): automatic, Italian or English.
+
 ## 1.25 (26)
 - Every effect tile shows a small animated preview, driven by a built-in demo song.
 - Brightness per light (device options), on top of the overall brightness.
