@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.28 (29)
+- Cleaner top of the screen: no system title bar, the app logo next to the name.
+
 ## 1.27 (28)
 - Effect previews follow the real music while the app is running and stay dark when it is stopped (no more demo song).
 

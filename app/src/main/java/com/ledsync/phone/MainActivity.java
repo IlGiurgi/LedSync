@@ -104,12 +104,18 @@ public class MainActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(16), dp(28), dp(16), dp(32));
+        root.setPadding(dp(16), dp(20), dp(16), dp(32));
         root.setBackgroundColor(BG);
 
         // ---- header
         LinearLayout head = row();
         head.setGravity(Gravity.CENTER_VERTICAL);
+        // app logo next to the name
+        android.widget.ImageView logo = new android.widget.ImageView(this);
+        logo.setImageResource(R.mipmap.ic_launcher);
+        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(dp(46), dp(46));
+        llp.rightMargin = dp(12);
+        head.addView(logo, llp);
         TextView title = text("LedSync", 28, TEXT, true);
         head.addView(title, weight());
         TextView info = text("ⓘ", 26, TEXT_2, false);
