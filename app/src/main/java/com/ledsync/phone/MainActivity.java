@@ -265,6 +265,8 @@ public class MainActivity extends Activity {
         });
         toggleRow(colCard, L.t("Colori a tempo (cambiano a ogni battito)", "Colours on the beat (change every beat)"), Tuning.beatColors,
                 on -> { Tuning.beatColors = on; saveBool("beat_colors", on); });
+        toggleRow(colCard, L.t("Drop: luci calme nella salita, lampo bianco sul drop", "Drop: calm lights in the build-up, white flash on the drop"), Tuning.dropEffects,
+                on -> { Tuning.dropEffects = on; saveBool("drop_fx", on); });
         root.addView(colCard, cardParams());
         updateHueVisibility();
 
@@ -393,6 +395,7 @@ public class MainActivity extends Activity {
         Tuning.batterySaver = prefs.getBoolean("battery_saver", false);
         Tuning.autoCycleSec = prefs.getInt("auto_cycle", 0);
         Tuning.beatColors = prefs.getBoolean("beat_colors", false);
+        Tuning.dropEffects = prefs.getBoolean("drop_fx", true);
         Tuning.autoOffMin = prefs.getInt("auto_off", 0);
         Tuning.disabled.clear();
         Tuning.disabled.addAll(prefs.getStringSet("dev_disabled", new java.util.HashSet<>()));

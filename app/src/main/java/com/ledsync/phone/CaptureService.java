@@ -342,6 +342,7 @@ public class CaptureService extends Service {
                             if (gridW != null && gridW > 0 && gridW <= dv.leds)
                                 dv.fx.renderMatrix(Tuning.effectFor(dv.key), dv.leds, gridW, Tuning.hue, dv.pixels);
                             else dv.fx.render(Tuning.effectFor(dv.key), dv.leds, Tuning.hue, dv.pixels);
+                            dv.fx.applyDrop(dv.pixels, dv.leds);
                         }
                         finishFrame(dv.pixels, dv.leds, Tuning.flipped.contains(dv.key), dv.key);
                         // save battery and Wi-Fi: skip frames that repeat the last one (still refresh every
@@ -382,6 +383,7 @@ public class CaptureService extends Service {
                     if (!chain.fill(y.key, y.pixels, ColorDevice.PIXELS)) {
                         y.fx.update(an);
                         y.fx.render(Tuning.effectFor(y.key), ColorDevice.PIXELS, Tuning.hue, y.pixels);
+                        y.fx.applyDrop(y.pixels, ColorDevice.PIXELS);
                     }
                     finishFrame(y.pixels, ColorDevice.PIXELS, false, y.key);
                     if (Tuning.batterySaver && (frameNo & 1) == 1) continue;
@@ -392,6 +394,10 @@ public class CaptureService extends Service {
                         : (Tuning.directMode ? L.t("Effetto attivo su ", "Effect running on ") : L.t("Sound sync verso ", "Sound sync to ")) + active
                         + (active == 1 ? L.t(" dispositivo", " device") : L.t(" dispositivi", " devices"));
                 if (an.beats.confident()) info += String.format(java.util.Locale.ROOT, " · %.0f BPM", an.beats.bpm);
+                if (Tuning.directMode && Tuning.dropEffects) {
+                    if (an.drops.state == DropDetector.DROP) info += " · DROP!";
+                    else if (an.drops.state == DropDetector.BUILD) info += L.t(" · salita…", " · build-up…");
+                }
                 if (yeeNote != null) info += "\n" + yeeNote;
                 if (System.currentTimeMillis() - lastErrorMs > 3000) status = info;
                 }

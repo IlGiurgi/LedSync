@@ -63,6 +63,8 @@ public final class AudioAnalyzer {
     public final double binHz;
     /** Tempo and beat clock, updated every frame. */
     final BeatTracker beats = new BeatTracker();
+    /** Build-ups and drops, updated every frame. */
+    final DropDetector drops = new DropDetector();
 
     public AudioAnalyzer(int sampleRate) {
         this.sampleRate = sampleRate;
@@ -123,6 +125,7 @@ public final class AudioAnalyzer {
 
         for (int k = 0; k < FFT_SIZE / 2; k++) lastPower[k] = re[k] * re[k] + im[k] * im[k];
         beats.process(lastPower, binHz, silent);
+        drops.process(bandDb, volDb, silent);
 
         // major peak between 60 Hz and 10 kHz
         int kMin = (int) (60 / binHz), kMax = Math.min(FFT_SIZE / 2 - 1, (int) (10000 / binHz));

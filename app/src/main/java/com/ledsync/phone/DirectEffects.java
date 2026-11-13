@@ -249,6 +249,7 @@ public final class DirectEffects {
         }
         colorShift += (colorShiftTarget - colorShift) * 0.35;
         if (colorShiftTarget > 1000) { colorShiftTarget -= 1000; colorShift -= 1000; }
+        updateDrop(a.drops);
     }
 
     /** Tempo-locked flash: the whole strip lights on every beat and fades over the beat; first beat of 4 brighter. */
@@ -276,6 +277,56 @@ public final class DirectEffects {
             double v = sgm == seg ? 1 - 0.6 * ph : (sgm == prev ? 0.4 * (1 - ph) : 0);
             v *= pres;
             set(work, i, (float) (c[0] * v), (float) (c[1] * v), (float) (c[2] * v));
+        }
+    }
+
+    // ---------------------------------------------------------------- build-up and drop (on top of any effect)
+
+    private float[] dropHold = new float[0];
+    private boolean dropHoldValid;
+    private double dropDim, dropFollow = 1, dropFlash;
+    private int dropSeen, dropBeats;
+
+    /** Follows the analyser's DropDetector: how calm the lights are during a build-up, and the flashes on the drop. */
+    private void updateDrop(DropDetector d) {
+        double p = d.state == DropDetector.BUILD && !silent ? d.progress : 0;
+        // the further the build-up, the slower and dimmer the lights: the drop then hits harder
+        dropDim = 1 - 0.55 * p;
+        dropFollow = 1 - 0.9 * p;
+        dropFlash *= 0.78;
+        if (d.count != dropSeen) {          // the drop: full white
+            dropSeen = d.count;
+            dropFlash = 1;
+            dropBeats = 0;
+        } else if (d.state == DropDetector.DROP && dropBeats < 7) {
+            // then a white flash on each of the next beats, weaker each time
+            boolean hit = bpmSure ? bpmTick : beat;
+            if (hit) dropFlash = Math.max(dropFlash, 0.85 - 0.1 * dropBeats++);
+        }
+        if (silent) dropFlash = 0;
+    }
+
+    /**
+     * Adds the build-up and drop to a rendered frame of {@code n} pixels (RGB bytes): during a build-up the
+     * picture moves slower and gets darker, on the drop the whole light flashes white, then flashes on the
+     * beats for about a bar and a half. Call once per frame after {@link #render} or {@link #renderMatrix}.
+     */
+    public void applyDrop(byte[] out, int n) {
+        int len = n * 3;
+        if (!Tuning.dropEffects || (dropFollow > 0.99 && dropFlash < 0.01)) {
+            dropHoldValid = false;
+            return;
+        }
+        if (dropHold.length != len) { dropHold = new float[len]; dropHoldValid = false; }
+        if (!dropHoldValid) {
+            for (int i = 0; i < len; i++) dropHold[i] = out[i] & 255;
+            dropHoldValid = true;
+        }
+        float follow = (float) dropFollow, dim = (float) dropDim, flash = (float) Math.min(1, dropFlash);
+        for (int i = 0; i < len; i++) {
+            dropHold[i] += ((out[i] & 255) - dropHold[i]) * follow;
+            float v = dropHold[i] * dim;
+            out[i] = toByte(v + (255 - v) * flash);
         }
     }
 

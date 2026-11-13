@@ -9,3 +9,6 @@ Compile against an android.jar for the few framework types, e.g.:
 `YeelightModesTest` runs a fake Yeelight on 127.0.0.1:55443 (compile it with `YeelightLink.java`).
 
 `LightChainTest` joins strip + lamp + strip into one strip and checks the effect travels across them (argument: PNG timeline).
+
+`DropTest` plays a synthetic dance track with a build-up and a drop (plus a slow fade-in, a pause and a
+steady 3-minute mix that must give no drops); compile it with `DropDetector.java` and `BeatTracker.java`.

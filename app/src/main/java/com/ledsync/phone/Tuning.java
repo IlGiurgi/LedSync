@@ -49,6 +49,8 @@ public final class Tuning {
 
     /** The colours step forward on every beat. */
     public static volatile boolean beatColors = false;
+    /** Build-ups make the lights calmer and darker, drops flash white (see DropDetector). */
+    public static volatile boolean dropEffects = true;
     /** Stop by itself after this many minutes of silence; 0 = never. */
     public static volatile int autoOffMin = 0;
 
