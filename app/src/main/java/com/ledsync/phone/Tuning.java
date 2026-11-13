@@ -68,6 +68,9 @@ public final class Tuning {
     /** Grid width for LED matrices (e.g. 11 for the word clock); missing = a normal strip. */
     public static final java.util.Map<String, Integer> matrixWidth = new java.util.concurrent.ConcurrentHashMap<>();
 
+    /** Lights joined into one long strip, in the order the effect travels through them; empty = not joined. */
+    public static final java.util.List<String> chain = new java.util.concurrent.CopyOnWriteArrayList<>();
+
     public static int effectFor(String ip) {
         Integer e = deviceEffect.get(ip);
         return e != null ? e : directEffect;

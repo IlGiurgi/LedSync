@@ -171,6 +171,10 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams dlp = matchWrap();
         dlp.topMargin = dp(8);
         devCard.addView(diag, dlp);
+        TextView join = pill(L.t("Unisci le luci in un'unica striscia", "Join lights into one strip"), false, v -> editChain());
+        LinearLayout.LayoutParams jlp = matchWrap();
+        jlp.topMargin = dp(8);
+        devCard.addView(join, jlp);
         root.addView(devCard, cardParams());
         renderDevices();
         refreshDeviceInfo();
@@ -426,6 +430,11 @@ public class MainActivity extends Activity {
                 Tuning.deviceBrightness.put(k, Math.max(5, Math.min(100, db.getInt(k))));
             }
         } catch (Exception ignored) { }
+        Tuning.chain.clear();
+        try {
+            JSONArray ch = new JSONArray(prefs.getString("dev_chain", "[]"));
+            for (int i = 0; i < ch.length(); i++) Tuning.chain.add(ch.getString(i));
+        } catch (Exception ignored) { }
         Tuning.deviceEffect.clear();
         try {
             JSONObject de = new JSONObject(prefs.getString("dev_effect", "{}"));
@@ -448,6 +457,7 @@ public class MainActivity extends Activity {
                     .putString("dev_bri", new JSONObject(new java.util.HashMap<String, Object>(Tuning.deviceBrightness)).toString())
                     .putString("dev_leds", new JSONObject(new java.util.HashMap<String, Object>(Tuning.ledCount)).toString())
                     .putString("dev_matrix", new JSONObject(new java.util.HashMap<String, Object>(Tuning.matrixWidth)).toString())
+                    .putString("dev_chain", new JSONArray(Tuning.chain).toString())
                     .apply();
         } catch (Exception ignored) { }
     }
@@ -778,6 +788,8 @@ public class MainActivity extends Activity {
             if (Tuning.flipped.contains(key)) extra += L.t(" · invertito", " · reversed");
             Integer bri = Tuning.deviceBrightness.get(key);
             if (bri != null) extra += " · " + bri + "%";
+            int link = Tuning.chain.indexOf(key);
+            if (link >= 0 && Tuning.chain.size() >= 2) extra += L.t(" · striscia unica ", " · joined strip ") + (link + 1) + "/" + Tuning.chain.size();
             View r = deviceRow(Tuning.disabled.contains(key) ? "○" : "●", name, kind + ip + extra, true, v -> deviceOptions(key, name));
             Switch sw = new Switch(this);
             sw.setChecked(!Tuning.disabled.contains(key));
@@ -1221,6 +1233,62 @@ public class MainActivity extends Activity {
                 .show();
     }
 
+    /**
+     * Joined strip: the lights are tapped in the order the effect should travel through them (e.g. strip,
+     * lamp, strip), then the app renders one effect on all of them as if they were one long strip.
+     */
+    private void editChain() {
+        if (devices.size() < 2) {
+            toast(L.t("Servono almeno due luci", "You need at least two lights"));
+            return;
+        }
+        List<String> picked = new ArrayList<>();
+        for (String k : Tuning.chain) if (devices.containsKey(k)) picked.add(k);
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(dp(20), dp(4), dp(20), dp(4));
+        Runnable[] fill = new Runnable[1];
+        fill[0] = () -> {
+            list.removeAllViews();
+            for (String key : devices.keySet()) {
+                int at = picked.indexOf(key);
+                String[] info = devices.get(key).split("\\|", -1);
+                String size = ColorLight.isColorKey(key) ? L.t("lampada", "lamp")
+                        : Tuning.ledCount.containsKey(key) ? Tuning.ledCount.get(key) + " LED"
+                        : info.length > 1 && !info[1].isEmpty() && !info[1].equals("0") ? info[1] + " LED" : "WLED";
+                String sub = (at >= 0 ? L.t("Posizione ", "Position ") + (at + 1) + " · " : L.t("Non unita · ", "Not joined · ")) + size;
+                list.addView(deviceRow(at >= 0 ? String.valueOf(at + 1) : "○", displayName(key), sub, at >= 0, v -> {
+                    if (!picked.remove(key)) picked.add(key);
+                    fill[0].run();
+                }));
+            }
+        };
+        fill[0].run();
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(list);
+        new AppDialog(this)
+                .setTitle(L.t("Unica striscia", "One joined strip"))
+                .setMessage(L.t("Tocca le luci nell'ordine in cui l'effetto deve passare: per esempio striscia del divano, lampada, striscia della TV. ",
+                        "Tap the lights in the order the effect should travel through them: for example sofa strip, lamp, TV strip. ")
+                        + L.t("Meteore, Scroll e gli altri effetti scorrono da una luce all'altra invece di ripetersi uguali. Vale l'effetto della prima luce; una lampada conta come un pezzo corto di striscia.",
+                        "Meteor, Scroll and the other effects run from one light into the next instead of repeating. The first light's effect is used; a lamp counts as a short piece of strip."))
+                .setView(sv)
+                .setPositiveButton(L.t("Salva", "Save"), (d, w) -> {
+                    Tuning.chain.clear();
+                    if (picked.size() >= 2) Tuning.chain.addAll(picked);
+                    else if (!picked.isEmpty()) toast(L.t("Servono almeno due luci: nessuna unione", "At least two lights are needed: nothing joined"));
+                    saveDeviceSettings();
+                    renderDevices();
+                })
+                .setNeutralButton(L.t("Separa tutte", "Split all"), (d, w) -> {
+                    Tuning.chain.clear();
+                    saveDeviceSettings();
+                    renderDevices();
+                })
+                .setNegativeButton(L.t("Annulla", "Cancel"), null)
+                .show();
+    }
+
     private void confirmRemove(String ip, String name) {
         new AppDialog(this)
                 .setTitle(L.t("Togliere ", "Remove ") + name + "?")
@@ -1234,6 +1302,7 @@ public class MainActivity extends Activity {
                     prefs.edit().putString("dev_names", customNames.toString()).apply();
                     Tuning.deviceEffect.remove(ip);
                     Tuning.deviceBrightness.remove(ip);
+                    Tuning.chain.remove(ip);
                     saveDeviceSettings();
                     saveDevices();
                     renderDevices();

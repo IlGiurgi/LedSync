@@ -272,6 +272,7 @@ public class CaptureService extends Service {
 
             AudioAnalyzer an = new AudioAnalyzer(SAMPLE_RATE);
             analyzer = an;
+            LightChain chain = new LightChain();
             short[] buf = new short[HOP];
             byte[] packet = new byte[AudioAnalyzer.PACKET_SIZE];
             rec.startRecording();
@@ -320,16 +321,28 @@ public class CaptureService extends Service {
                 // frame items: {address, port, packet} for UDP, {YeelightLink, int[] rgb or null=off}
                 List<Object[]> frame = new ArrayList<>();
                 int active = 0;
+                // joined lights: one effect across all of them, as if they were a single long strip
+                chain.begin();
+                for (String k : Tuning.chain) {
+                    if (Tuning.disabled.contains(k)) continue;
+                    for (Device dv : devices)
+                        if (dv.key.equals(k) && (Tuning.directMode || !dv.isWled)) chain.add(k, dv.leds);
+                    for (ColorDevice y : yeelights)
+                        if (y.key.equals(k) && y.link.isOpen()) chain.add(k, ColorDevice.PIXELS);
+                }
+                chain.render(an, Tuning.hue);
                 {
                     for (Device dv : devices) {
                         if (Tuning.disabled.contains(dv.key)) continue;
                         if (!Tuning.directMode && dv.isWled) continue;   // handled by sound sync below
                         active++;
-                        dv.fx.update(an);
-                        Integer gridW = Tuning.matrixWidth.get(dv.key);
-                        if (gridW != null && gridW > 0 && gridW <= dv.leds)
-                            dv.fx.renderMatrix(Tuning.effectFor(dv.key), dv.leds, gridW, Tuning.hue, dv.pixels);
-                        else dv.fx.render(Tuning.effectFor(dv.key), dv.leds, Tuning.hue, dv.pixels);
+                        if (!chain.fill(dv.key, dv.pixels, dv.leds)) {
+                            dv.fx.update(an);
+                            Integer gridW = Tuning.matrixWidth.get(dv.key);
+                            if (gridW != null && gridW > 0 && gridW <= dv.leds)
+                                dv.fx.renderMatrix(Tuning.effectFor(dv.key), dv.leds, gridW, Tuning.hue, dv.pixels);
+                            else dv.fx.render(Tuning.effectFor(dv.key), dv.leds, Tuning.hue, dv.pixels);
+                        }
                         finishFrame(dv.pixels, dv.leds, Tuning.flipped.contains(dv.key), dv.key);
                         // save battery and Wi-Fi: skip frames that repeat the last one (still refresh every
                         // 500 ms so the light stays in realtime mode) and, in battery saver, every other frame
@@ -366,8 +379,10 @@ public class CaptureService extends Service {
                     if (y.link.error() != null) yeeNote = y.link.error();
                     else if (y.link.note() != null) yeeNote = y.link.note();
                     active++;
-                    y.fx.update(an);
-                    y.fx.render(Tuning.effectFor(y.key), ColorDevice.PIXELS, Tuning.hue, y.pixels);
+                    if (!chain.fill(y.key, y.pixels, ColorDevice.PIXELS)) {
+                        y.fx.update(an);
+                        y.fx.render(Tuning.effectFor(y.key), ColorDevice.PIXELS, Tuning.hue, y.pixels);
+                    }
                     finishFrame(y.pixels, ColorDevice.PIXELS, false, y.key);
                     if (Tuning.batterySaver && (frameNo & 1) == 1) continue;
                     frame.add(new Object[]{y.link, averageColor(y.pixels, ColorDevice.PIXELS)});
@@ -445,7 +460,7 @@ public class CaptureService extends Service {
 
     /** A one-colour light (Yeelight, Govee, Hue): the effect is rendered on a few virtual pixels and averaged. */
     private static final class ColorDevice {
-        static final int PIXELS = 30;
+        static final int PIXELS = LightChain.LAMP_PIXELS;
         final String key;
         final ColorLight link;
         final DirectEffects fx = new DirectEffects();
