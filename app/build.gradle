@@ -10,8 +10,8 @@ android {
         applicationId 'com.ledsync.phone'
         minSdk 29
         targetSdk 34
-        versionCode 33
-        versionName '1.31-prova'
+        versionCode 34
+        versionName '1.31-prova2'
     }
 
     // optional: put storeFile/storePassword/keyAlias/keyPassword in keystore.properties (never commit it)
