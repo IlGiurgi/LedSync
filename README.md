@@ -37,7 +37,7 @@ show to your lights over Wi-Fi. **No microphone on the lights, no PC, no LedFx s
 | 🎵 **36 effects** | Bass pulse, Energy, Scroll, Fire, Fireworks, Meteors, Kaleidoscope, BPM effects and more, with live previews. Many are adapted from [LedFx](https://github.com/LedFx/LedFx). The lights go dark in silence and hit hard on the bass. |
 | 🥁 **Tempo detection** | BPM shown while running, effects locked to the beat, colours that change on every beat. |
 | 💡 **Many lights at once** | Each light gets its own LED count, effect, brightness, direction and name. |
-| 🔠 **Matrices and word clocks** | Equalizer columns, and every other effect drawn as rings from the centre. |
+| 🔠 **Matrices and word clocks** | Real 2D effects: comets, fireworks, rain, fire, starry sky, ripples, water, lava lamp, kaleidoscope, a beating heart, sweep, VU meter, scrolling spectrogram and equalizer columns. The rest are drawn as rings from the centre. |
 | 🎨 **Colours** | 9 gradients, brightness, mirror, blur, colour roll, favourites. |
 | 🔁 **Hands-free** | Automatic effect change, automatic stop after silence, notification controls, Quick Settings tile. |
 | 🎤 **Microphone mode** | Follow music from a TV, PC or speakers. |

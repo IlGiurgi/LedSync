@@ -329,14 +329,17 @@ public final class DirectEffects {
 
     /**
      * Renders on a grid of w columns, row by row from the top left (pixel = row * w + column).
-     * Equalizer and Bands become vertical bars, one per column, with a falling peak dot.
+     * Equalizer, Bands and Spectrum become vertical bars, one per column, with a falling peak dot.
+     * Comets, fireworks, rain, fire, stars, ripples, water, lava, kaleidoscope, heartbeat, sweep, VU and
+     * scroll have their own 2D versions (see {@link #NATIVE_2D}).
      * Every other effect is drawn as rings: the 1D effect goes from the centre of the grid outwards.
      * LEDs after the last full row (e.g. the 4 minute dots of a word clock) get the centre colour.
      */
     public void renderMatrix(int effect, int n, int w, double hue, byte[] out) {
         int h = Math.max(1, n / w);
         java.util.Arrays.fill(out, 0, n * 3, (byte) 0);
-        if (effect == EQUALIZER || effect == BANDS) {
+        if (renderNative2D(effect, n, w, h, out)) return;
+        if (effect == EQUALIZER || effect == BANDS || effect == SPECTRUM) {
             frame++;
             rollOffset = (rollOffset + Tuning.roll * 0.002) % 1.0;
             if (colLevel.length != w) { colLevel = new float[w]; colPeak = new float[w]; }
@@ -345,10 +348,12 @@ public final class DirectEffects {
                 double sum = 0;
                 for (int m = from; m < to; m++) sum += mel[m];
                 float v = (float) Math.min(1, 1.6 * sum / (to - from));
+                if (effect == SPECTRUM) v = (float) spec[Math.min(15, c * 16 / w)];
                 colLevel[c] = Math.max(v, colLevel[c] * 0.82f);
                 float height = colLevel[c] * h;
                 colPeak[c] = Math.max(height, colPeak[c] - 0.12f);
-                int[] col = gradient(w == 1 ? 0 : (double) c / (w - 1));
+                int[] col = effect == SPECTRUM ? hsv(Math.min(15, c * 16 / w) * 300.0 / 16.0, 1, 1)
+                        : gradient(w == 1 ? 0 : (double) c / (w - 1));
                 for (int r = 0; r < h; r++) {
                     int fromBottom = h - 1 - r;
                     float lit = Math.max(0, Math.min(1, height - fromBottom));
@@ -393,6 +398,511 @@ public final class DirectEffects {
             out[i * 3 + 1] = radial[mid + 1];
             out[i * 3 + 2] = radial[mid + 2];
         }
+    }
+
+    // ---------------------------------------------------------------- native 2D effects for matrices
+
+    /** Effects that have their own 2D version on a grid instead of rings from the centre. */
+    public static final int[] NATIVE_2D = {METEOR, FIREWORKS, RAIN, FIRE, TWINKLE, RIPPLE, WATER, LAVA, KALEIDO,
+            HEARTBEAT, BPM_SWEEP, VU, SCROLL, EQUALIZER, BANDS, SPECTRUM};
+
+    public static boolean nativeOnMatrix(int effect) {
+        for (int e : NATIVE_2D) if (e == effect) return true;
+        return false;
+    }
+
+    private static final int MAX_Q = 128;
+    private final double[] qX = new double[MAX_Q], qY = new double[MAX_Q], qVX = new double[MAX_Q], qVY = new double[MAX_Q],
+            qLife = new double[MAX_Q], qFade = new double[MAX_Q];
+    private final int[] qColor = new int[MAX_Q];
+    private final boolean[] qRocket = new boolean[MAX_Q];
+    private int qCount, gridW, gridH, gridEffect = -1;
+    /** canvas: what stays from frame to frame (trails); pix: the frame being drawn. */
+    private float[] canvas = new float[0], pix = new float[0], heat2 = new float[0], star2 = new float[0], starHue2 = new float[0];
+    private double[] wave2A = new double[0], wave2B = new double[0];
+    private double scrollAcc, vuPeak;
+    // ripples and lava blobs on the grid
+    private final double[] ring2X = new double[8], ring2Y = new double[8], ring2R = new double[8], ring2Amp = new double[8], ring2Col = new double[8];
+    private int ring2Next;
+    private final double[] blobX = new double[4], blobY = new double[4], blobVX = new double[4], blobVY = new double[4];
+    private double blobSize;
+
+    private boolean renderNative2D(int effect, int n, int w, int h, byte[] out) {
+        if (!nativeOnMatrix(effect) || effect == EQUALIZER || effect == BANDS || effect == SPECTRUM) return false;
+        frame++;
+        rollOffset = (rollOffset + Tuning.roll * 0.002) % 1.0;
+        if (w != gridW || h != gridH || effect != gridEffect) {
+            gridW = w;
+            gridH = h;
+            gridEffect = effect;
+            canvas = new float[w * h * 3];
+            pix = new float[w * h * 3];
+            heat2 = new float[w * h];
+            star2 = new float[w * h];
+            starHue2 = new float[w * h];
+            wave2A = new double[w * h];
+            wave2B = new double[w * h];
+            qCount = 0;
+            java.util.Arrays.fill(ring2Amp, 0);
+            for (int b = 0; b < blobX.length; b++) {
+                blobX[b] = rnd.nextDouble() * (w - 1);
+                blobY[b] = rnd.nextDouble() * (h - 1);
+                double a = rnd.nextDouble() * 2 * Math.PI;
+                blobVX[b] = Math.cos(a);
+                blobVY[b] = Math.sin(a);
+            }
+        }
+        java.util.Arrays.fill(pix, 0);
+        switch (effect) {
+            case METEOR: comets2D(); break;
+            case FIREWORKS: fireworks2D(); break;
+            case RAIN: rain2D(); break;
+            case FIRE: fire2D(); break;
+            case TWINKLE: stars2D(); break;
+            case RIPPLE: ripples2D(); break;
+            case WATER: water2D(); break;
+            case LAVA: lava2D(); break;
+            case KALEIDO: kaleido2D(); break;
+            case HEARTBEAT: heart2D(); break;
+            case BPM_SWEEP: sweep2D(); break;
+            case VU: vu2D(); break;
+            case SCROLL: spectrogram2D(); break;
+            default: break;
+        }
+        long r = 0, g = 0, b = 0;
+        for (int i = 0; i < w * h; i++) {
+            out[i * 3] = toByte(pix[i * 3]);
+            out[i * 3 + 1] = toByte(pix[i * 3 + 1]);
+            out[i * 3 + 2] = toByte(pix[i * 3 + 2]);
+            r += out[i * 3] & 255;
+            g += out[i * 3 + 1] & 255;
+            b += out[i * 3 + 2] & 255;
+        }
+        // LEDs after the grid (e.g. the minute dots of a word clock): the average colour, a little boosted
+        double k = 1.6 / (w * h);
+        for (int i = w * h; i < n; i++) {
+            out[i * 3] = toByte((float) (r * k));
+            out[i * 3 + 1] = toByte((float) (g * k));
+            out[i * 3 + 2] = toByte((float) (b * k));
+        }
+        return true;
+    }
+
+    private void spawn2(double x, double y, double vx, double vy, int rgb, double fade, boolean rocket) {
+        if (qCount >= MAX_Q) return;
+        qX[qCount] = x; qY[qCount] = y; qVX[qCount] = vx; qVY[qCount] = vy;
+        qColor[qCount] = rgb; qLife[qCount] = 1; qFade[qCount] = fade; qRocket[qCount] = rocket;
+        qCount++;
+    }
+
+    /** Removes particles that faded out or left the grid (with a margin of {@code m} pixels). */
+    private void compact2(double m) {
+        int alive = 0;
+        for (int k = 0; k < qCount; k++) {
+            if (qLife[k] > 0 && qX[k] > -m && qX[k] < gridW - 1 + m && qY[k] > -m - 2 && qY[k] < gridH - 1 + m) {
+                qX[alive] = qX[k]; qY[alive] = qY[k]; qVX[alive] = qVX[k]; qVY[alive] = qVY[k];
+                qColor[alive] = qColor[k]; qLife[alive] = qLife[k]; qFade[alive] = qFade[k]; qRocket[alive] = qRocket[k];
+                alive++;
+            }
+        }
+        qCount = alive;
+    }
+
+    private void add2(float[] b, int x, int y, int rgb, double v) {
+        if (x < 0 || y < 0 || x >= gridW || y >= gridH || v <= 0) return;
+        int i = (y * gridW + x) * 3;
+        b[i] = Math.min(255, b[i] + (float) (((rgb >> 16) & 255) * v));
+        b[i + 1] = Math.min(255, b[i + 1] + (float) (((rgb >> 8) & 255) * v));
+        b[i + 2] = Math.min(255, b[i + 2] + (float) ((rgb & 255) * v));
+    }
+
+    private void set2(float[] b, int x, int y, int[] c, double v) {
+        int i = (y * gridW + x) * 3;
+        b[i] = (float) (c[0] * v);
+        b[i + 1] = (float) (c[1] * v);
+        b[i + 2] = (float) (c[2] * v);
+    }
+
+    /** A soft dot at (x, y), spread over the 4 nearest pixels so slow movement stays smooth. */
+    private void dot2(float[] b, double x, double y, int rgb, double v) {
+        int x0 = (int) Math.floor(x), y0 = (int) Math.floor(y);
+        double tx = x - x0, ty = y - y0;
+        add2(b, x0, y0, rgb, v * (1 - tx) * (1 - ty));
+        add2(b, x0 + 1, y0, rgb, v * tx * (1 - ty));
+        add2(b, x0, y0 + 1, rgb, v * (1 - tx) * ty);
+        add2(b, x0 + 1, y0 + 1, rgb, v * tx * ty);
+    }
+
+    private void fadeCanvas(double f) {
+        for (int i = 0; i < canvas.length; i++) canvas[i] *= (float) f;
+    }
+
+    private void canvasToPix() {
+        System.arraycopy(canvas, 0, pix, 0, canvas.length);
+    }
+
+    /** Comets: every hit shoots a comet diagonally across the grid with a fading tail; louder is faster. */
+    private void comets2D() {
+        int w = gridW, h = gridH;
+        if (onset && !silent && qCount < 8) {
+            int[] c = gradient(beat ? (beatCount % 6) / 6.0 : 0.5 + rnd.nextDouble() * 0.5);
+            double sp = 0.2 + 0.35 * Math.max(bass, vol);
+            double a = Math.toRadians(20 + rnd.nextDouble() * 50);
+            boolean fromRight = rnd.nextBoolean();
+            double vx = Math.cos(a) * sp * (fromRight ? -1 : 1), vy = Math.sin(a) * sp;
+            double x, y;
+            if (rnd.nextBoolean()) { x = rnd.nextDouble() * (w - 1); y = -0.5; }                  // from the top edge
+            else { x = fromRight ? w - 0.5 : -0.5; y = rnd.nextDouble() * h * 0.6; }              // from a side
+            spawn2(x, y, vx, vy, pack(c), 0.004, false);
+        }
+        fadeCanvas(0.78 + 0.1 * (1 - bass));
+        for (int k = 0; k < qCount; k++) {
+            qX[k] += qVX[k];
+            qY[k] += qVY[k];
+            qLife[k] -= qFade[k];
+        }
+        compact2(1.5);
+        for (int k = 0; k < qCount; k++) {
+            dot2(canvas, qX[k], qY[k], qColor[k], 1);
+            if (rnd.nextDouble() < 0.2) {
+                double back = 2 + rnd.nextDouble() * 3;
+                add2(canvas, (int) Math.round(qX[k] - qVX[k] * back * 3), (int) Math.round(qY[k] - qVY[k] * back * 3), 0xFFFFFF, 0.25);
+            }
+        }
+        canvasToPix();
+        for (int k = 0; k < qCount; k++) dot2(pix, qX[k], qY[k], 0xFFFFFF, 0.35);   // white-hot head
+    }
+
+    /** Fireworks: each bass hit launches a rocket from the bottom; at the top it bursts into a circle of sparks that fall. */
+    private void fireworks2D() {
+        int w = gridW, h = gridH;
+        double g = 0.15;   // fast rocket: it bursts ~150 ms after the hit, so the burst still feels on the beat
+        if (beat && !silent && qCount < MAX_Q - 24) {
+            double x = 1 + rnd.nextDouble() * Math.max(0, w - 3);
+            double burstRow = h * (0.1 + 0.45 * (1 - Math.max(bass, rnd.nextDouble() * 0.6)));
+            double vy = -Math.sqrt(2 * g * Math.max(1, (h - 1) - burstRow));
+            spawn2(x, h - 1, (rnd.nextDouble() - 0.5) * 0.04, vy, 0xFFE0B0, 0.004, true);
+        }
+        if (onset && !beat && !silent && high > 0.5 && rnd.nextDouble() < 0.3)
+            spawn2(rnd.nextInt(w), rnd.nextInt(Math.max(1, h * 2 / 3)), 0, 0, 0xFFFFFF, 0.15, false);   // crackle on the hi-hats
+        int born = qCount;
+        for (int k = 0; k < born; k++) {
+            if (qRocket[k]) {
+                qVY[k] += g;
+                if (qVY[k] >= -0.1) {
+                    int sparks = 12 + rnd.nextInt(8);
+                    double hue = rnd.nextDouble();
+                    double power = 0.7 + 0.6 * bass;
+                    for (int s = 0; s < sparks; s++) {
+                        double a = rnd.nextDouble() * 2 * Math.PI, sp = (0.12 + rnd.nextDouble() * 0.25) * power;
+                        spawn2(qX[k], qY[k], Math.cos(a) * sp, Math.sin(a) * sp - 0.04,
+                                pack(gradient(hue + rnd.nextDouble() * 0.15)), 0.025 + rnd.nextDouble() * 0.02, false);
+                    }
+                    qLife[k] = 0;
+                }
+            } else {
+                qVX[k] *= 0.94;
+                qVY[k] = qVY[k] * 0.94 + 0.006;
+            }
+            qX[k] += qVX[k];
+            qY[k] += qVY[k];
+            qLife[k] -= qFade[k];
+        }
+        compact2(1);
+        fadeCanvas(0.72);
+        for (int k = 0; k < qCount; k++) dot2(canvas, qX[k], qY[k], qColor[k], qRocket[k] ? 0.9 : qLife[k] * qLife[k]);
+        canvasToPix();
+    }
+
+    /** Rain: drops fall down the grid, more on the hits; bass drops, mid drops and high drops have their own colour. */
+    private void rain2D() {
+        int w = gridW, h = gridH;
+        double rate = high * high * 0.25 + (onset ? 0.6 : 0) + (beat ? 1 + bass * 2 : 0);
+        int births = silent ? 0 : (int) Math.floor(rate + rnd.nextDouble());
+        for (int k = 0; k < births; k++) {
+            double which = beat && k == 0 ? 0 : (high > mid ? 0.999 : 0.5);
+            spawn2(rnd.nextInt(w), -0.5, 0, 0.2 + 0.2 * rnd.nextDouble() + 0.2 * vol, pack(gradient(which + rnd.nextDouble() * 0.08)), 0, false);
+        }
+        fadeCanvas(0.7);
+        for (int k = 0; k < qCount; k++) {
+            qVY[k] += 0.01;
+            qY[k] += qVY[k];
+            if (qY[k] >= h - 1) {   // splash on the bottom row
+                int x = (int) Math.round(qX[k]);
+                add2(canvas, x, h - 1, qColor[k], 1);
+                add2(canvas, x - 1, h - 1, qColor[k], 0.45);
+                add2(canvas, x + 1, h - 1, qColor[k], 0.45);
+                qLife[k] = 0;
+            }
+        }
+        compact2(1);
+        for (int k = 0; k < qCount; k++) dot2(canvas, qX[k], qY[k], qColor[k], 1);
+        canvasToPix();
+    }
+
+    /** Fire: flames rise from the bottom row and flicker; the bass feeds them and makes them taller. */
+    private void fire2D() {
+        int w = gridW, h = gridH;
+        double cool = 0.14 + 0.2 * (1 - bass);    // calm parts: short flames, heavy bass: they reach the top
+        for (int y = 0; y < h - 1; y++) {   // top first, so the rows below are still last frame's
+            for (int x = 0; x < w; x++) {
+                int below = (y + 1) * w;
+                float sum = heat2[below + x] * 2 + heat2[below + Math.max(0, x - 1)] + heat2[below + Math.min(w - 1, x + 1)]
+                        + (y + 2 < h ? heat2[(y + 2) * w + x] : heat2[below + x]);
+                heat2[y * w + x] = Math.max(0, sum / 5f * 0.95f - (float) (rnd.nextDouble() * cool));
+            }
+        }
+        double p = presence();
+        for (int x = 0; x < w; x++)
+            heat2[(h - 1) * w + x] = silent ? heat2[(h - 1) * w + x] * 0.8f
+                    : (float) Math.min(1.5, p * (0.45 + 0.55 * rnd.nextDouble()) + bass * 0.7 * rnd.nextDouble() + (beat ? 0.4 : 0));
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                float hv = heat2[y * w + x];
+                double sat = Math.max(0, Math.min(1, 1 - (hv - 1) * 2));
+                set2(pix, x, y, hsv(Math.min(1, hv * hv) * 36, sat, Math.min(1, hv * 1.8)), 1);
+            }
+        }
+    }
+
+    /** Starry sky: a dim night in the gradient with stars all over the grid that light up on the highs. */
+    private void stars2D() {
+        int w = gridW, h = gridH, cells = w * h;
+        int births = silent ? 0 : (int) Math.floor((0.002 + high * high * 0.02 + (onset ? 0.025 : 0)) * cells + rnd.nextDouble());
+        for (int k = 0; k < births; k++) {
+            int at = rnd.nextInt(cells);
+            if (star2[at] < 0.3f) { star2[at] = (float) (0.8 + 0.2 * rnd.nextDouble()); starHue2[at] = (float) rnd.nextDouble(); }
+        }
+        double night = 0.12 * presence();
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int i = y * w + x;
+                int[] bg = gradient((x + y) / (double) Math.max(1, w + h - 2) * 0.5 + animTime * 0.02);
+                double tw = star2[i] * (0.75 + 0.25 * Math.sin(frame * 0.4 + i));
+                int[] sc = gradient(starHue2[i]);
+                pix[i * 3] = (float) (bg[0] * night + (255 * 0.6 + sc[0] * 0.4) * tw);
+                pix[i * 3 + 1] = (float) (bg[1] * night + (255 * 0.6 + sc[1] * 0.4) * tw);
+                pix[i * 3 + 2] = (float) (bg[2] * night + (255 * 0.6 + sc[2] * 0.4) * tw);
+                star2[i] *= 0.95f;
+            }
+        }
+        animTime += 0.02;
+    }
+
+    /** Ripples: every beat drops a ring that spreads over the grid; the first beat of the bar from the centre, the others anywhere. */
+    private void ripples2D() {
+        int w = gridW, h = gridH;
+        boolean step = bpmSure ? bpmTick : beat;
+        if (step && !silent) {
+            long idx = bpmSure ? bpmIndex : beatCount;
+            boolean centre = idx % 4 == 0;
+            ring2X[ring2Next] = centre ? (w - 1) / 2.0 : rnd.nextDouble() * (w - 1);
+            ring2Y[ring2Next] = centre ? (h - 1) / 2.0 : rnd.nextDouble() * (h - 1);
+            ring2R[ring2Next] = 0;
+            ring2Amp[ring2Next] = 0.7 + 0.3 * bass;
+            ring2Col[ring2Next] = (idx % 6) / 6.0;
+            ring2Next = (ring2Next + 1) % ring2X.length;
+        }
+        double reach = Math.hypot(w, h);
+        double speed = bpmSure && beatInterval > 0 ? reach * 0.6 / Math.max(15, beatInterval * 1.6) : 0.2;
+        double width = 0.9 + 0.8 * mid;
+        double base = 0.08 * presence();
+        int[] bg = gradient(0.75);
+        for (int i = 0; i < w * h; i++) set(pix, i, (float) (bg[0] * base), (float) (bg[1] * base), (float) (bg[2] * base));
+        for (int r = 0; r < ring2X.length; r++) {
+            if (ring2Amp[r] <= 0.01) continue;
+            int c = pack(gradient(ring2Col[r]));
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    double d = Math.abs(Math.hypot(x - ring2X[r], y - ring2Y[r]) - ring2R[r]) / width;
+                    if (d < 1) add2(pix, x, y, c, ring2Amp[r] * (1 - d * d));
+                }
+            }
+            ring2R[r] += speed;
+            ring2Amp[r] *= 0.97;
+            if (ring2R[r] > reach + width) ring2Amp[r] = 0;
+        }
+    }
+
+    /** Water: drops fall on the surface on the hits and the waves spread, bounce off the edges and cross each other. */
+    private void water2D() {
+        int w = gridW, h = gridH;
+        if (!silent && (beat || (onset && rnd.nextDouble() < 0.5))) {
+            int at = rnd.nextInt(w * h);
+            wave2A[at] += 1.2 + 1.5 * bass;
+        }
+        if (!silent && rnd.nextDouble() < high * 0.15) wave2A[rnd.nextInt(w * h)] += 0.5;   // light drizzle on the highs
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int i = y * w + x;
+                // 4 sides + 4 corners (corners help against the chequerboard you get on small grids)
+                double side = at(wave2A, x - 1, y) + at(wave2A, x + 1, y) + at(wave2A, x, y - 1) + at(wave2A, x, y + 1);
+                double corner = at(wave2A, x - 1, y - 1) + at(wave2A, x + 1, y - 1) + at(wave2A, x - 1, y + 1) + at(wave2A, x + 1, y + 1);
+                wave2B[i] = (side * 0.35 + corner * 0.15 - wave2B[i]) * 0.94;
+            }
+        }
+        double[] t = wave2A; wave2A = wave2B; wave2B = t;
+        double base = 0.18 * presence();
+        animTime += 0.01;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                double v = wave2A[y * w + x];
+                double lift = Math.min(1, Math.abs(v) * 1.6);
+                int[] c = gradient(0.5 + (x + y) / (double) Math.max(1, w + h - 2) * 0.3 + v * 0.15 + animTime * 0.02);
+                set2(pix, x, y, c, Math.min(1, base + lift * 0.9));
+            }
+        }
+    }
+
+    private double at(double[] g, int x, int y) {
+        return x < 0 || y < 0 || x >= gridW || y >= gridH ? 0 : g[y * gridW + x];
+    }
+
+    /** Lava lamp: four soft blobs float around and melt into each other; they grow with the bass and move faster with the mids. */
+    private void lava2D() {
+        int w = gridW, h = gridH;
+        blobSize += ((1.4 + 1.6 * bass) - blobSize) * 0.1;
+        double speed = 0.02 + 0.08 * mid;
+        for (int b = 0; b < blobX.length; b++) {
+            blobX[b] += blobVX[b] * speed;
+            blobY[b] += blobVY[b] * speed;
+            if (blobX[b] < 0 || blobX[b] > w - 1) { blobVX[b] = -blobVX[b]; blobX[b] = Math.max(0, Math.min(w - 1, blobX[b])); }
+            if (blobY[b] < 0 || blobY[b] > h - 1) { blobVY[b] = -blobVY[b]; blobY[b] = Math.max(0, Math.min(h - 1, blobY[b])); }
+        }
+        animTime += 0.003;
+        double pres = Math.min(1, presence() * 1.8);
+        double r2 = blobSize * blobSize;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                double field = 0, hue = 0;
+                for (int b = 0; b < blobX.length; b++) {
+                    double dx = x - blobX[b], dy = y - blobY[b];
+                    double f = r2 / (dx * dx + dy * dy + 0.6);
+                    field += f;
+                    hue += f * b / (double) blobX.length;
+                }
+                double v = Math.max(0, Math.min(1, (field - 0.5) / 0.8));
+                v = v * v * (3 - 2 * v);
+                int[] c = gradient(hue / Math.max(1e-6, field) + animTime);
+                set2(pix, x, y, c, pres * (0.05 + 0.95 * v));
+            }
+        }
+    }
+
+    /** Kaleidoscope: a pattern mirrored 8 ways around the centre that spins with the mids and turns around on strong beats. */
+    private void kaleido2D() {
+        int w = gridW, h = gridH;
+        if (beat && bass > 0.7 && rnd.nextDouble() < 0.35) kaleidoDir = -kaleidoDir;
+        kaleidoSpeed += ((0.002 + 0.02 * mid) * kaleidoDir - kaleidoSpeed) * 0.15;
+        kaleidoPos += kaleidoSpeed;
+        double pres = Math.min(1, presence() * 1.8);
+        double cx = (w - 1) / 2.0, cy = (h - 1) / 2.0;
+        double slice = Math.PI / 4;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                double dx = x - cx, dy = y - cy, rad = Math.hypot(dx, dy);
+                // angle folded into one of 8 mirrored slices, turning with kaleidoPos
+                double ang = ((Math.atan2(dy, dx) + kaleidoPos * 2 * Math.PI) % slice + slice) % slice;
+                double fold = Math.min(ang, slice - ang) / slice * 2;   // 0 on the slice edges, 1 in the middle
+                double t = sin01(rad * 0.2 - kaleidoPos * 3 + fold * 0.3);
+                double v = pres * (0.35 + 0.65 * Math.max(bass * 0.7, t));
+                int[] c = gradient(t * 0.4 + fold * 0.12 + kaleidoPos);
+                set2(pix, x, y, c, v);
+            }
+        }
+    }
+
+    /** Heartbeat: a heart in the middle of the grid that beats twice on every beat, like a real one. */
+    private void heart2D() {
+        int w = gridW, h = gridH;
+        boolean step = bpmSure ? bpmTick : beat;
+        if (step && !silent) { heartA = 1; heartDelay = 9; }
+        if (heartDelay > 0 && --heartDelay == 0) heartB = 0.65;
+        heartA *= 0.9;
+        heartB *= 0.9;
+        double pres = Math.min(1, presence() * 3);
+        double v = Math.max(heartA, heartB) * pres;
+        double size = Math.min(w / 2.4, h / 2.3) * (0.78 + 0.25 * v);
+        double cx = (w - 1) / 2.0, cy = (h - 1) / 2.0 + size * 0.1;
+        int[] c = gradient(0), glow = gradient(0.3);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int inside = 0;   // 3x3 samples per pixel for smooth edges
+                for (int sy = 0; sy < 3; sy++) {
+                    for (int sx = 0; sx < 3; sx++) {
+                        double X = (x - 1 / 3.0 + sx / 3.0 - cx) / size, Y = -(y - 1 / 3.0 + sy / 3.0 - cy) / size;
+                        double q = X * X + Y * Y - 1;
+                        if (q * q * q - X * X * Y * Y * Y <= 0) inside++;
+                    }
+                }
+                double cover = inside / 9.0;
+                double lvl = cover * (0.18 * pres + 0.82 * v);
+                double edge = 1 - cover;
+                set2(pix, x, y, new int[]{(int) (c[0] * (1 - edge * 0.5) + glow[0] * edge * 0.5),
+                        (int) (c[1] * (1 - edge * 0.5) + glow[1] * edge * 0.5), (int) (c[2] * (1 - edge * 0.5) + glow[2] * edge * 0.5)}, lvl);
+            }
+        }
+    }
+
+    /** Sweep: a bright band crosses the grid once per beat, back and forth; every bar it switches between across and down. */
+    private void sweep2D() {
+        int w = gridW, h = gridH;
+        double ph = bpmSure ? bpmPhase : Math.min(1, (frame - lastBeatFrame) / Math.max(10, beatInterval));
+        long idx = bpmSure ? bpmIndex : beatCount;
+        double eased = 0.5 - 0.5 * Math.cos(Math.PI * ph);
+        double at = idx % 2 == 0 ? eased : 1 - eased;
+        boolean down = (idx / 4) % 2 == 1;
+        int len = down ? h : w;
+        double width = Math.max(1.5 / len, 0.22);
+        int[] c = gradient(((idx / 2) % 6) / 6.0);
+        double pres = Math.min(1, presence() * 3);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                double d = Math.abs(pos(down ? y : x, len) - at) / width;
+                double v = d < 1 ? (1 - d) * (1 - d) : 0;
+                set2(pix, x, y, c, (v + 0.08) * pres);
+            }
+        }
+    }
+
+    /** VU meter: the grid fills up from the bottom with the volume, green to red, with a peak line that falls back. */
+    private void vu2D() {
+        int w = gridW, h = gridH;
+        double level = vol * h;
+        vuPeak = Math.max(level, vuPeak - 0.08);
+        for (int y = 0; y < h; y++) {
+            int fromBottom = h - 1 - y;
+            double d = h == 1 ? 0 : (double) fromBottom / (h - 1);
+            int[] c = {(int) Math.min(255, 510 * d), (int) Math.min(255, 510 * (1 - d)), 0};
+            double lit = Math.max(0, Math.min(1, level - fromBottom));
+            boolean peak = vuPeak > 0.5 && fromBottom == Math.min(h - 1, (int) vuPeak);
+            for (int x = 0; x < w; x++) set2(pix, x, y, c, lit > 0 ? lit : (peak ? 0.6 : 0));
+        }
+    }
+
+    /** Scroll: a moving picture of the music. Each column is a moment (bass at the bottom, highs at the top) and it flows to the left. */
+    private void spectrogram2D() {
+        int w = gridW, h = gridH;
+        scrollAcc += 0.04 + 0.03 * Tuning.scrollSpeed;
+        while (scrollAcc >= 1) {
+            scrollAcc -= 1;
+            for (int y = 0; y < h; y++) {
+                int row = y * w * 3;
+                System.arraycopy(canvas, row + 3, canvas, row, (w - 1) * 3);
+                canvas[row + (w - 1) * 3] = canvas[row + (w - 1) * 3 + 1] = canvas[row + (w - 1) * 3 + 2] = 0;
+            }
+        }
+        fadeCanvas(0.99);
+        for (int y = 0; y < h; y++) {
+            double f = h == 1 ? 0 : (double) (h - 1 - y) / (h - 1);   // 0 = bottom row = bass
+            double v = Math.min(1, melAt(f) * 1.3);
+            int[] c = gradient(f * 0.9);
+            int i = (y * w + w - 1) * 3;
+            canvas[i] = Math.max(canvas[i], (float) (c[0] * v));
+            canvas[i + 1] = Math.max(canvas[i + 1], (float) (c[1] * v));
+            canvas[i + 2] = Math.max(canvas[i + 2], (float) (c[2] * v));
+        }
+        canvasToPix();
     }
 
     public void render(int effect, int n, double hue, byte[] out) {

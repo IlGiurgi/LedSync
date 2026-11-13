@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.30 (31)
+- Matrices and word clocks: 13 effects now have real 2D versions instead of rings from the centre: comets flying diagonally, fireworks rising and bursting, rain falling down the grid, rising flames, stars all over the grid, ripples from anywhere, water waves, lava lamp blobs, an 8-way kaleidoscope, a beating heart, a sweep that switches direction every bar, a VU meter that fills from the bottom and a scrolling spectrogram (Scroll). Spectrum (16 bands) becomes columns too.
+- The extra LEDs after the grid (e.g. the minute dots) take the average colour of the picture.
+
 ## 1.29 (30)
 - Uses less battery and Wi-Fi: frames that repeat the last one (e.g. dark during silence) are not sent again, only a refresh every 500 ms.
 - New "Battery saver" switch: 25 updates per second instead of 50, effects keep their speed.

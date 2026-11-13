@@ -37,7 +37,7 @@ di luci via Wi-Fi. **Niente microfono sulle luci, niente PC, niente server LedFx
 | 🎵 **36 effetti** | Pulsazione bassi, Energy, Scroll, Fuoco, Fuochi d'artificio, Meteore, Caleidoscopio, effetti BPM e altri, con anteprime animate. Molti sono adattati da [LedFx](https://github.com/LedFx/LedFx). Nel silenzio le luci si spengono, sui bassi colpiscono forte. |
 | 🥁 **Rilevamento del tempo** | BPM mostrati mentre suona, effetti agganciati al battito, colori che cambiano a ogni battito. |
 | 💡 **Tante luci insieme** | Ogni luce ha il suo numero di LED, effetto, luminosità, direzione e nome. |
-| 🔠 **Griglie e orologi a parole** | Colonne dell'equalizzatore, e ogni altro effetto disegnato a cerchi dal centro. |
+| 🔠 **Griglie e orologi a parole** | Veri effetti 2D: comete, fuochi d'artificio, pioggia, fuoco, cielo stellato, onde, acqua, lava lamp, caleidoscopio, un cuore che batte, scansione, VU meter, spettrogramma che scorre e colonne dell'equalizzatore. Gli altri sono disegnati a cerchi dal centro. |
 | 🎨 **Colori** | 9 gradienti, luminosità, specchio, sfocatura, rotazione colori, preferiti. |
 | 🔁 **Senza mani** | Cambio automatico dell'effetto, spegnimento dopo il silenzio, comandi nella notifica, riquadro nelle Impostazioni rapide. |
 | 🎤 **Modalità microfono** | Segue la musica di TV, PC o casse. |

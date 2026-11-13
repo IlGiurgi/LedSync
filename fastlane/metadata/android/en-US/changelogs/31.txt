@@ -1,0 +1,1 @@
+• Matrices and word clocks: 13 effects now have real 2D versions (comets, fireworks, rain, fire, stars, ripples, water, lava, kaleidoscope, heart, VU, spectrogram)
