@@ -55,6 +55,7 @@ final class LightChain {
         if (pixels.length != total * 3) pixels = new byte[total * 3];
         fx.update(an);
         fx.render(Tuning.effectFor(keys.get(0)), total, hue, pixels);
+        fx.applyDrop(pixels, total);   // build-up and drop on the whole joined strip at once
     }
 
     /** Copies this light's piece of the joined strip into its own frame; false if it is not joined now. */
