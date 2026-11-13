@@ -74,12 +74,12 @@ final class Guide {
                         L.t("• Non usare insieme un altro programma che comanda le stesse luci (es. un effetto da Home Assistant o LedFx): si darebbero fastidio.\n"
                                 + "• Su WLED attiva \"Disable WiFi sleep\" (Config → WiFi Setup) per una risposta più pronta.\n"
                                 + "• Imposta la batteria di LedSync su \"Senza restrizioni\", così non si ferma a schermo spento.\n"
-                                + "• Con casse Bluetooth le luci arrivano prima del suono: usa \"Ritardo luci\" nelle regolazioni avanzate.\n"
+                                + "• Con casse Bluetooth le luci arrivano prima del suono: usa \"Ritardo luci\" nelle regolazioni avanzate, o \"Misura il ritardo in automatico\" che lo trova da solo con qualche bip.\n"
                                 + "• Se qualcosa va a scatti, apri \"Diagnostica connessione e ritardi\".\n\nQuesta guida resta sempre nel pulsante ⓘ in alto.",
                             "• Do not run another program on the same lights at the same time (e.g. a Home Assistant effect or LedFx): they would fight.\n"
                                 + "• On WLED enable \"Disable WiFi sleep\" (Config → WiFi Setup) for a snappier response.\n"
                                 + "• Set LedSync's battery usage to \"Unrestricted\" so it keeps running with the screen off.\n"
-                                + "• With Bluetooth speakers the lights come before the sound: use \"Light delay\" in the advanced settings.\n"
+                                + "• With Bluetooth speakers the lights come before the sound: use \"Light delay\" in the advanced settings, or \"Measure the delay automatically\" to work it out with a few beeps.\n"
                                 + "• If something stutters, open \"Connection and latency check\".\n\nThis guide is always available from the ⓘ button at the top.")},
         };
     }
