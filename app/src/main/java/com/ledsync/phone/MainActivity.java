@@ -482,6 +482,16 @@ public class MainActivity extends Activity {
                 v -> Math.round(v / 0.9) + "%", v -> { Tuning.beatRatio = (200 - v) / 100.0; save("t_beat", 200 - v); });
         slider(box, L.t("Ritardo luci (casse Bluetooth)", "Light delay (Bluetooth speakers)"), 0, 50, Tuning.delayMs / 10, v -> (v * 10) + " ms",
                 v -> { Tuning.delayMs = v * 10; save("t_delay", v * 10); });
+        TextView calibrate = pill(L.t("Misura il ritardo in automatico", "Measure the delay automatically"), false,
+                v -> DelayCalibrator.start(this, ms -> {
+                    Tuning.delayMs = ms;
+                    save("t_delay", ms);
+                    box.removeAllViews();
+                    buildTuningSliders(box);
+                }));
+        LinearLayout.LayoutParams clp = matchWrap();
+        clp.topMargin = dp(8);
+        box.addView(calibrate, clp);
     }
 
     // ================================================================ effect tiles & gradients
@@ -1534,6 +1544,7 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        if (DelayCalibrator.onPermission(this, requestCode)) return;
         if (requestCode != REQ_PERMS) return;
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             beginCapture();
